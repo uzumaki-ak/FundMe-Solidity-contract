@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.24;
 
-import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
+import {PriceConvertor} from './PriceConverter.sol';
 
 
 //old method to get pricr👇
@@ -29,9 +29,15 @@ import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interf
 
 
 contract FundMe {
-    
+    using PriceConvertor for uint256;
     // uint256 public myval=1;
     uint256 public minimumUSD = 5 * 1e18;
+    address[] public funders;
+     mapping (address funder => uint256 funded) public addressToAmountFunded;
+  address public owner;
+  constructor() payable{
+    owner = msg.sender;
+  }
     function fund() public payable {
         //alllow user ot send money
         //have a minimum usd dol  sent
@@ -43,23 +49,47 @@ contract FundMe {
          // if the amount is less than 1e18 it will revert
          // msg.value is the amount of eth sent by the user
         //  myval = myval+2;
-        require(getConversionRate(msg.value) >= minimumUSD, "minimum amount required");
+        //made our own library and imported and used it 
+        require(msg.value.getConversionRate() >= minimumUSD, "minimum amount required");
+        //receiving sender naame
+        funders.push(msg.sender);
+        //getting to know about who funded how much
+        addressToAmountFunded[msg.sender] = addressToAmountFunded[msg.sender] + msg.value;
     }
 
-// function withdraw() public{} 
- function getVersion() public view returns (uint256) {
-return AggregatorV3Interface(0x694AA1769357215DE4FAC081bf1f309aDC325306).version();
- }
+function withdraw() public onlyOwner{
 
- function  getPrice() public view returns(uint256) {
-    AggregatorV3Interface priceFeed = AggregatorV3Interface(0x694AA1769357215DE4FAC081bf1f309aDC325306);
-     (,int256 price , , ,) = priceFeed.latestRoundData();
-    return uint256(price * 1e10);
- }
- function getConversionRate(uint256 ethAmount) public view returns(uint256) {
-    uint256 ethPrice = getPrice();
-  uint ethAmountInUsd = (ethPrice * ethAmount) / 1e18;
-  return ethAmountInUsd;
- }
+    //ensuring no one else can call withdraw func
+    ///we can't be using this one if there are 100s of func which need it so we usse what called modifier
+    // require(msg.sender == owner, 'failed no owner');
+    for(uint256 funderIndex=0;funderIndex<funders.length;funderIndex ++) {
+      address funder = funders[funderIndex];
+      addressToAmountFunded[funder]=0;
+    
+    }
+    //resetting the array
+funders=new address[](0);
 
+//transfer method
+//three transfer,send,call
+//transfer thisis now depreceated
+// payable(msg.sender).transfer(address(this).balance);
+// 2.send this return bol and req to use 'require' keyword to refund ekse wont refund
+// this 'send' is deprecated and scheduled for removal. 
+// bool sendSuccuess = payable(msg.sender).send(address(this).balance);
+// require(sendSuccuess,"failed");
+
+
+//3.call this is recommended this has some good and adv usage but here we will use to send transaction only this reurns 2 val callSuccess and dataReturnes
+
+(bool callSuccess,) = payable(msg.sender).call{value:address(this).balance}("");
+require(callSuccess,"failed");
+} 
+ 
+modifier onlyOwner() {
+    require(msg.sender == owner , 'not owner');
+    _;
+
+    //the order of thi underscore "_" maters if it was above then it would mean that execute all func first then this onlyowner but now it is exec onlyowner first then only withdraw func
+}
 }
