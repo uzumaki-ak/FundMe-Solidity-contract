@@ -1,6 +1,6 @@
 # FundMe Smart Contract
 
-A beginner-friendly Solidity smart contract that allows users to fund the contract with ETH, with a minimum USD requirement. This was your first Solidity contract - congratulations on starting your blockchain journey! 🎉
+A beginner-friendly Solidity smart contract that allows users to fund the contract with ETH, with a minimum USD requirement. This was my first Solidity contract.
 
 ## Overview
 
