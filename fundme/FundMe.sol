@@ -27,16 +27,23 @@ import {PriceConvertor} from './PriceConverter.sol';
 // }
 
 
-
+error notOwner();
 contract FundMe {
     using PriceConvertor for uint256;
     // uint256 public myval=1;
-    uint256 public minimumUSD = 5 * 1e18;
+    // this min usd is const i mean static we know that but we have not applied solidity featire in tis to make it more gas cost frienlsy 
+    // so there arw 2 things immutable and constant:these make variabl;e constant so val dont change using these 2 hrlps reducegas signifintly
+    ///to yse constant use constant keyword ane it is advised to keep all caps lock the namin i.e
+    //TJS CONSTANT KEYWORD SAVES ALMOST 19K GAS 
+    //WITHOUTH THIS THE COST WAS AROND 859,757 AND NOW IT IS 840,197 
+
+    // uint256 public minimumusd = 5 * 1e18;
+    uint256 public constant MINIMUM_USD = 5 * 1e18;
     address[] public funders;
      mapping (address funder => uint256 funded) public addressToAmountFunded;
-  address public owner;
+  address public immutable i_owner;
   constructor() payable{
-    owner = msg.sender;
+    i_owner = msg.sender;
   }
     function fund() public payable {
         //alllow user ot send money
@@ -50,7 +57,7 @@ contract FundMe {
          // msg.value is the amount of eth sent by the user
         //  myval = myval+2;
         //made our own library and imported and used it 
-        require(msg.value.getConversionRate() >= minimumUSD, "minimum amount required");
+        require(msg.value.getConversionRate() >= MINIMUM_USD , "minimum amount required");
         //receiving sender naame
         funders.push(msg.sender);
         //getting to know about who funded how much
@@ -87,9 +94,11 @@ require(callSuccess,"failed");
 } 
  
 modifier onlyOwner() {
-    require(msg.sender == owner , 'not owner');
+    // require(msg.sender == i_owner , 'not owner');
+    //using gas efficient method
+    if(msg.sender != i_owner) {revert  notOwner ();}
     _;
 
-    //the order of thi underscore "_" maters if it was above then it would mean that execute all func first then this onlyowner but now it is exec onlyowner first then only withdraw func
+    //the order of thi underscore "_" maters  if it was above then it would mean that execute all func first then this onlyowner but now it is exec onlyowner first then only withdraw func
 }
 }
