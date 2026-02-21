@@ -101,4 +101,13 @@ modifier onlyOwner() {
 
     //the order of thi underscore "_" maters  if it was above then it would mean that execute all func first then this onlyowner but now it is exec onlyowner first then only withdraw func
 }
+
+///special func-receive and fallback so if even someone skips our fund func we still call that func these are not req to add function keyword and it has external visibility and payable mutabi;ity
+//now if someoe sends us money without calling our fund function it will still call fund func
+receive() external payable { 
+  fund();
+}
+fallback() external payable { 
+  fund();
+}
 }
